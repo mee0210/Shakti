@@ -37,21 +37,83 @@ const Auth = () => {
   const [officialWorkplace, setOfficialWorkplace] = useState("");
   const [officialBadgeNumber, setOfficialBadgeNumber] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loginAuthMethod === "otp") {
-      toast.success("OTP sent to your contact!");
-    } else {
-      toast.success("Login successful!");
-      navigate(userType === "official" ? "/police-dashboard" : "/user-dashboard");
-    }
+  const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  const payload = {
+    contact: loginContact,
+    contact_type: loginContactType, // "email" or "phone"
+    password: loginPassword,
+    user_type: userType // "user" or "official"
   };
 
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Account created successfully!");
-    navigate(userType === "official" ? "/police-dashboard" : "/user-dashboard");
-  };
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (response.ok) {
+      toast.success("Login successful!");
+      navigate(userType === "official" ? "/police-dashboard" : "/user-dashboard");
+    } else {
+      toast.error(data.error || "Login failed!");
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Network error. Please try again.");
+  }
+ };
+
+
+  const handleSignup = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  let payload;
+  let endpoint;
+
+  if (userType === "user") {
+    payload = {
+      name: signupName,
+      email: signupEmail,
+      phone: signupPhone,
+      password: signupPassword
+    };
+    endpoint = "http://127.0.0.1:8000/api/user/signup/"; // Django URL for user signup
+  } else {
+    payload = {
+      name: officialName,
+      designation: officialDesignation,
+      post: officialPost,
+      workplace: officialWorkplace,
+      badgeid: officialBadgeNumber,
+      email: officialEmail,
+      phone: officialPhone,
+      password: officialPassword
+    };
+    endpoint = "http://127.0.0.1:8000/api/official/signup/"; // Django URL for official signup
+  }
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (response.ok) {
+      toast.success("Account created successfully!");
+      navigate(userType === "official" ? "/police-dashboard" : "/user-dashboard");
+    } else {
+      toast.error(data.error || "Signup failed!");
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Network error. Please try again.");
+  }
+ };
+
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
